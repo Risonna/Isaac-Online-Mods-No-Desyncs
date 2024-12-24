@@ -1,0 +1,30 @@
+-- Custom mod logic integrated into the game (this one's for two treasures in a treasure room, tested for a long time with no desyncs at all)
+local function onNewRoom()
+    local room = Game():GetRoom()
+    local roomType = room:GetType()
+
+    -- Check if it's a treasure room
+    if roomType == RoomType.ROOM_TREASURE then
+        -- Only spawn additional item on first visit
+        if Game():GetLevel():GetCurrentRoomDesc().VisitedCount < 2 then
+            -- Find if there's already an item present
+            local entities = Isaac.GetRoomEntities()
+            for i = 1, #entities do
+                local entity = entities[i]
+                if entity.Type == 5 and entity.Variant == 100 then
+				-- Get item from treasure room pool
+                    local itemPool = Game():GetItemPool()
+                    local newItem = itemPool:GetCollectible(ItemPoolType.POOL_TREASURE, true, entity.InitSeed)
+                    -- Spawn second item slightly offset from the first (still has a change to be trapped lol
+					-- better write some code to destroy anything that would prevent the item from spawning, but
+					-- not to make desyncs happen this is just enough.
+                    Isaac.Spawn(5, 100, newItem, entity.Position + Vector(100, 0), Vector(0,0), nil)
+                    break
+                end
+            end
+        end
+    end
+end
+
+-- Register the callback manually
+Isaac.AddCallback(nil, ModCallbacks.MC_POST_NEW_ROOM, onNewRoom)
